@@ -53,8 +53,6 @@ int __cdecl wmain(int argc, wchar_t* argv[]) {
   // Subscribe to events.
   hSubscription = EvtSubscribe(NULL, signalEvent, pwsPath, pwsQuery, NULL, NULL,
                                NULL, EvtSubscribeToFutureEvents);
-  // hSubscription = EvtSubscribe(NULL, aWaitHandles[1], pwsPath, pwsQuery,
-  // NULL, NULL, NULL, EvtSubscribeStartAtOldestRecord);
   if (NULL == hSubscription) {
     status = GetLastError();
 
@@ -80,7 +78,7 @@ int __cdecl wmain(int argc, wchar_t* argv[]) {
   }
   wprintf(L"Press control-C to quit.\n");
 
-  // Loop until the user presses a key or there is an error.
+  // Loop until the user does a control-C
   while (true) {
     dwWait = WaitForSingleObject(signalEvent, INFINITE);
     if (dwWait == WAIT_OBJECT_0) {
