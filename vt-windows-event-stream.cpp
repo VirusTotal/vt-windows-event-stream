@@ -9,7 +9,7 @@
 
 DWORD EnumerateResults(EVT_HANDLE hResults, HANDLE outFile);
 
-BOOL keep_running = TRUE;
+bool keep_running = TRUE;
 
 void PrintUsage(const wchar_t* name) {
   wprintf(L"Usage: %s <LogPath> <output_file_name>\n", name);
