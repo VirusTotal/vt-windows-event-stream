@@ -2,17 +2,17 @@
 #include <stdio.h>
 #include <windows.h>
 #include <winevt.h>
+#include <vector>
 
 #pragma comment(lib, "wevtapi.lib")
 
-// Max events to process in one call
-#define EVENTS_ARRAY_SIZE 10
 
 DWORD EnumerateResults(EVT_HANDLE hResults, HANDLE outFile);
-DWORD OutputEvent(EVT_HANDLE hEvent, HANDLE outFile);
+
+BOOL keep_running = TRUE;
 
 void PrintUsage(const wchar_t* name) {
-  wprintf(L"Usage: %s <LogPath> <OutputFile>\n", name);
+  wprintf(L"Usage: %s <LogPath> <output_file_name>\n", name);
   wprintf(L"\nExamples:\n");
   wprintf(L"  %s Microsoft-Windows-Sysmon/Operational sysmon.xml\n", name);
   wprintf(
@@ -25,106 +25,118 @@ void PrintUsage(const wchar_t* name) {
       L"\\\\VBOXSVR\\tmp\\ps.xml\n",
       name);
 }
+BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
 
-int __cdecl wmain(int argc, wchar_t* argv[]) {
+  keep_running = FALSE;
+
+  switch (fdwCtrlType) {
+      // Handle the CTRL-C signal.
+    case CTRL_C_EVENT:
+      printf("Ctrl-C event\n\n");
+      return TRUE;
+
+      // CTRL-CLOSE: confirm that the user wants to exit.
+    case CTRL_CLOSE_EVENT:
+      printf("Ctrl-Close event\n\n");
+      return TRUE;
+
+      // Pass other signals to the next handler.
+    case CTRL_BREAK_EVENT:
+      printf("Ctrl-Break event\n\n");
+      return FALSE;
+
+    case CTRL_LOGOFF_EVENT:
+      printf("Ctrl-Logoff event\n\n");
+      return FALSE;
+
+    case CTRL_SHUTDOWN_EVENT:
+      printf("Ctrl-Shutdown event\n\n");
+      return FALSE;
+
+    default:
+      return FALSE;
+  }
+}
+
+
+// Output the event XML
+DWORD OutputEvent(EVT_HANDLE hEvent, HANDLE output_handle) {
   DWORD status = ERROR_SUCCESS;
-  EVT_HANDLE hSubscription = NULL;
-  LPWSTR pwsPath = L"Microsoft-Windows-Sysmon/Operational";
-  LPWSTR outputFile = NULL;
-  LPWSTR pwsQuery = L"*";
-  HANDLE signalEvent = NULL;
-  HANDLE outputHandle = NULL;
+  DWORD unicode_buff_size = 0;
+  DWORD unicode_buff_used = 0;
+  DWORD property_count = 0;
+  std::vector<wchar_t> xml_unicode;
+  DWORD utf8_buff_size = 0;
+  DWORD bytes_written = 0;
+  DWORD utf8_len = 0;
 
-  DWORD dwWait = 0;
+  // EvtRenderEventXml flag to render the event as an XML string.
+  if (!EvtRender(NULL, hEvent, EvtRenderEventXml,
+                 0,     // buffer size
+                 NULL,  // buffer
+                 &unicode_buff_used, &property_count)) {
+    if (ERROR_INSUFFICIENT_BUFFER == (status = GetLastError())) {
+      unicode_buff_size = unicode_buff_used;
+      xml_unicode.resize(unicode_buff_used);
 
-  if (argc != 3) {
-    PrintUsage(argv[0]);
-    return 0;
-  }
-  pwsPath = argv[1];
-  outputFile = argv[2];
+      EvtRender(NULL, hEvent, EvtRenderEventXml, unicode_buff_used,
+                xml_unicode.data(), &unicode_buff_used, &property_count);
+    }
 
-  signalEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
-  if (NULL == signalEvent) {
-    wprintf(L"CreateEvent failed with %lu.\n", GetLastError());
-    goto cleanup;
-  }
-
-  // Subscribe to events.
-  hSubscription = EvtSubscribe(NULL, signalEvent, pwsPath, pwsQuery, NULL, NULL,
-                               NULL, EvtSubscribeToFutureEvents);
-  if (NULL == hSubscription) {
-    status = GetLastError();
-
-    if (ERROR_EVT_CHANNEL_NOT_FOUND == status)
-      wprintf(L"Channel %s was not found.\n", pwsPath);
-    else if (ERROR_EVT_INVALID_QUERY == status)
-      wprintf(L"The query %s was not found.\n", pwsQuery);
-    else
-      wprintf(L"EvtSubscribe failed with %lu.\n", status);
-
-    goto cleanup;
-  }
-
-  outputHandle = CreateFileW(outputFile, GENERIC_WRITE, FILE_SHARE_READ,
-                             NULL,                   // default security
-                             CREATE_ALWAYS,          // always create new file
-                             FILE_ATTRIBUTE_NORMAL,  // normal file
-                             NULL);                  // no attr. template)
-
-  if (outputHandle == INVALID_HANDLE_VALUE) {
-    wprintf(L"Unable to open output file: %s\n", outputFile);
-    goto cleanup;
-  }
-  wprintf(L"Press control-C to quit.\n");
-
-  // Loop until the user does a control-C
-  while (true) {
-    dwWait = WaitForSingleObject(signalEvent, INFINITE);
-    if (dwWait == WAIT_OBJECT_0) {
-      if (ERROR_NO_MORE_ITEMS !=
-          (status = EnumerateResults(hSubscription, outputHandle))) {
-        break;
-      }
-
-      ResetEvent(signalEvent);
-    } else if (dwWait == WAIT_ABANDONED) {
-      wprintf(L"WaitForSingleObject WAIT_ABANDONED\n");
-    } else {
-      wprintf(L"WaitForSingleObject %x.\n", dwWait);
+    if (ERROR_SUCCESS != (status = GetLastError())) {
+      wprintf(L"EvtRender failed with %d\n", GetLastError());
+      return status;
     }
   }
 
-cleanup:
+  utf8_buff_size = unicode_buff_size * 4;  // 4X is worst case
+  std::vector<char> utf8_content(utf8_buff_size);
 
-  if (hSubscription) EvtClose(hSubscription);
+  // copy to utf8
+  snprintf(utf8_content.data(), unicode_buff_size, "%S\n", xml_unicode.data());
 
-  if (signalEvent) CloseHandle(signalEvent);
-  return 0;
+  utf8_len = (DWORD)strlen(utf8_content.data());
+
+  if (WriteFile(output_handle, utf8_content.data(), utf8_len, &bytes_written,
+                NULL)) {
+    if (utf8_len != bytes_written) {
+      wprintf(L"WriteFile failed with %d.  buffSize=%d  Written=%d\n",
+              GetLastError(), unicode_buff_size, bytes_written);
+    }
+  } else {
+    // error
+    wprintf(L"WriteFile failed: %d.\n", GetLastError());
+  }
+
+  return status;
 }
 
-// Enumerate the events in the result set.
-DWORD EnumerateResults(EVT_HANDLE hResults, HANDLE outputHandle) {
+// Process results from subscription result set.
+// Enumerate the events in the result set and send to output_handle
+DWORD ProcessResults(EVT_HANDLE result_set, HANDLE ouput_handle) {
+  const int kEventsArraySize = 10;
   DWORD status = ERROR_SUCCESS;
-  EVT_HANDLE hEvents[EVENTS_ARRAY_SIZE];
-  DWORD dwReturned = 0;
+  EVT_HANDLE event_handles[kEventsArraySize];
+  DWORD events_returned = 0;
 
-  while (true) {
+  while (keep_running) {
+
     // Get a block of events from the result set.
-    if (!EvtNext(hResults, EVENTS_ARRAY_SIZE, hEvents, INFINITE, 0, &dwReturned)) {
+    if (!EvtNext(result_set, kEventsArraySize, event_handles, INFINITE, 0,
+                 &events_returned)) {
       if (ERROR_NO_MORE_ITEMS != (status = GetLastError())) {
         wprintf(L"EvtNext failed with %lu\n", status);
       }
-
-      goto cleanup;
+      break;  // goto cleanup
     }
 
     // For each event, call the OutputEvent function which renders the
     // event for display.
-    for (DWORD i = 0; i < dwReturned; i++) {
-      if (ERROR_SUCCESS == (status = OutputEvent(hEvents[i], outputHandle))) {
-        EvtClose(hEvents[i]);
-        hEvents[i] = NULL;
+    for (DWORD i = 0; i < events_returned; i++) {
+      if (ERROR_SUCCESS ==
+          (status = OutputEvent(event_handles[i], ouput_handle))) {
+        EvtClose(event_handles[i]);
+        event_handles[i] = NULL;
       } else {
         goto cleanup;
       }
@@ -134,72 +146,101 @@ DWORD EnumerateResults(EVT_HANDLE hResults, HANDLE outputHandle) {
 cleanup:
 
   // Closes any events in case an error occurred above.
-  for (DWORD i = 0; i < dwReturned; i++) {
-    if (NULL != hEvents[i]) EvtClose(hEvents[i]);
+  for (DWORD i = 0; i < events_returned; i++) {
+    if (NULL != event_handles[i]) {
+      EvtClose(event_handles[i]);
+    }
   }
 
   return status;
 }
 
-// Output the event XML
-DWORD OutputEvent(EVT_HANDLE hEvent, HANDLE outputHandle) {
+
+int __cdecl wmain(int argc, wchar_t* argv[]) {
   DWORD status = ERROR_SUCCESS;
-  DWORD dwBufferSize = 0;
-  DWORD dwBufferUsed = 0;
-  DWORD dwPropertyCount = 0;
-  LPWSTR pRenderedContent = NULL;
-  LPSTR utf8Content = NULL;
-  DWORD utf8BuffSize = 0;
-  DWORD dwBytesWritten = 0;
-  int ret = 0;
-  DWORD len = 0;
+  EVT_HANDLE subscription_handle = NULL;
+  LPWSTR channel_path = NULL; // example L"Microsoft-Windows-Sysmon/Operational";
+  LPWSTR output_file_name = NULL;
+  LPWSTR subscription_query = L"*";
+  HANDLE signal_event = NULL;
+  HANDLE output_handle = NULL;
 
-  // The EvtRenderEventXml flag tells EvtRender to render the event as an XML
-  // string.
-  if (!EvtRender(NULL, hEvent, EvtRenderEventXml, dwBufferSize,
-                 pRenderedContent, &dwBufferUsed, &dwPropertyCount)) {
-    if (ERROR_INSUFFICIENT_BUFFER == (status = GetLastError())) {
-      dwBufferSize = dwBufferUsed;
-      pRenderedContent = (LPWSTR)malloc(dwBufferSize);
-      if (pRenderedContent) {
-        EvtRender(NULL, hEvent, EvtRenderEventXml, dwBufferSize,
-                  pRenderedContent, &dwBufferUsed, &dwPropertyCount);
-      } else {
-        wprintf(L"malloc failed\n");
-        status = ERROR_OUTOFMEMORY;
-        goto cleanup;
+  DWORD wait_ret = 0;
+
+  if (argc != 3) {
+    PrintUsage(argv[0]);
+    return 0;
+  }
+  channel_path = argv[1];
+  output_file_name = argv[2];
+
+  SetConsoleCtrlHandler(CtrlHandler, TRUE);
+
+  signal_event = CreateEvent(NULL, TRUE, TRUE, NULL);
+  if (NULL == signal_event) {
+    wprintf(L"CreateEvent failed with %lu.\n", GetLastError());
+    return 1;
+  }
+
+  // Subscribe to events.
+  subscription_handle = EvtSubscribe(NULL, signal_event, channel_path, subscription_query, NULL,
+                                     NULL,
+                               NULL, EvtSubscribeToFutureEvents);
+  if (NULL == subscription_handle) {
+    status = GetLastError();
+
+    if (ERROR_EVT_CHANNEL_NOT_FOUND == status)
+      wprintf(L"Channel %s was not found.\n", channel_path);
+    else if (ERROR_EVT_INVALID_QUERY == status)
+      wprintf(L"The query %s was not found.\n", subscription_query);
+    else
+      wprintf(L"EvtSubscribe failed with %lu.\n", status);
+
+    CloseHandle(signal_event);
+    return 1;
+  }
+
+  output_handle = CreateFileW(output_file_name, GENERIC_WRITE, FILE_SHARE_READ,
+                             NULL,                   // default security
+                             CREATE_ALWAYS,          // always create new file
+                             FILE_ATTRIBUTE_NORMAL,  // normal file
+                             NULL);                  // no attr. template)
+
+  if (output_handle == INVALID_HANDLE_VALUE) {
+    wprintf(L"Unable to open output file: %s\n", output_file_name);
+    EvtClose(subscription_handle);
+    return 1;
+  }
+  wprintf(L"Press control-C to quit.\n");
+
+  // Loop until the user does a control-C
+  while (keep_running) {
+
+    wait_ret = WaitForSingleObject(signal_event, 1000);
+    if (wait_ret == WAIT_OBJECT_0) {
+      if (ERROR_NO_MORE_ITEMS !=
+          (status = ProcessResults(subscription_handle, output_handle))) {
+        break;
       }
-    }
 
-    if (ERROR_SUCCESS != (status = GetLastError())) {
-      wprintf(L"EvtRender failed with %d\n", GetLastError());
-      goto cleanup;
+      ResetEvent(signal_event);
+    } else if (wait_ret == WAIT_TIMEOUT) {
+      continue;
+    } else if (wait_ret == WAIT_ABANDONED) {
+      wprintf(L"WaitForSingleObject WAIT_ABANDONED\n");
+    } else {
+      wprintf(L"WaitForSingleObject %x.\n", wait_ret);
     }
   }
 
-  utf8BuffSize = dwBufferSize * 4;  // 4X is worst case
-  utf8Content = (LPSTR)calloc(utf8BuffSize, 1);
-
-  // copy to utf8
-  snprintf(utf8Content, utf8BuffSize, "%S\n", pRenderedContent);
-
-  len = (DWORD)strlen(utf8Content);
-
-  if (WriteFile(outputHandle, utf8Content, len, &dwBytesWritten, NULL)) {
-    if (len != dwBytesWritten) {
-      wprintf(L"WriteFile failed with %d.  buffSize=%d  Written=%d\n",
-              GetLastError(), dwBufferSize, dwBytesWritten);
-    }
-  } else {
-    // error
-    wprintf(L"WriteFile failed: %d.\n", GetLastError());
+  if (subscription_handle) {
+    EvtClose(subscription_handle);
   }
 
-cleanup:
+  if (signal_event) {
+    CloseHandle(signal_event);
+  }
 
-  if (pRenderedContent) free(pRenderedContent);
-
-  if (utf8Content) free(utf8Content);
-
-  return status;
+  return 0;
 }
+
