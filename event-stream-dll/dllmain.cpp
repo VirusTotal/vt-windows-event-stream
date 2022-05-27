@@ -324,7 +324,17 @@ DLLEXPORT int StartStreamEventsThread(LPWSTR channel_path, LPWSTR output_file_na
 }
 
 
-DLLEXPORT int HelloWorld() { 
-  wprintf(L"HelloWorld\n");
+DLLEXPORT int HelloWorld0() { 
+  wprintf(L"HelloWorld0\n");
+  return 0;
+}
+
+DLLEXPORT int HelloWorld1(int test) {
+  wprintf(L"HelloWorld1\n");
+  return 0;
+}
+
+DLLEXPORT int HelloWorld2(LPWSTR test) {
+  wprintf(L"HelloWorld2\n");
   return 0;
 }
