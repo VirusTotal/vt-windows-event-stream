@@ -10,6 +10,10 @@
 
 #pragma comment(lib, "wevtapi.lib")
 
+#define MAX_THREADS 16
+int event_threads_running = 0;
+
+DWORD thread_id_array[MAX_THREADS];
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -184,6 +188,10 @@ cleanup:
   return status;
 }
 
+
+
+
+
 DLLEXPORT int StreamEvents(LPWSTR channel_path, LPWSTR output_file_name) {
   EVT_HANDLE subscription_handle = NULL;
   HANDLE output_handle = NULL;
@@ -262,5 +270,61 @@ DLLEXPORT int StreamEvents(LPWSTR channel_path, LPWSTR output_file_name) {
   if (signal_event) {
     CloseHandle(signal_event);
   }
+  return 0;
+}
+
+#define MAX_PARAM_LEN  256
+struct ThreadParams {
+  WCHAR channel_path[MAX_PARAM_LEN];
+  WCHAR output_file_name[MAX_PARAM_LEN];
+};
+
+
+DWORD WINAPI StreamEventParams(LPVOID lpParam) {
+  struct ThreadParams params;
+
+  memcpy(&params, lpParam, sizeof(struct ThreadParams));
+  return StreamEvents(params.channel_path, params.output_file_name);
+}
+
+
+DLLEXPORT int StartStreamEventsThread(LPWSTR channel_path, LPWSTR output_file_name) {
+  HANDLE thread_handle;
+  struct ThreadParams params;
+  DWORD thread_id = 0;
+  
+  wprintf(L"StartStreamEventsThread start\n");
+  
+  wcscpy_s(params.channel_path, MAX_PARAM_LEN - 1, channel_path);
+  wcscpy_s(params.output_file_name, MAX_PARAM_LEN - 1, output_file_name);
+
+  if (event_threads_running > MAX_THREADS) {
+    wprintf(L"Too many threads\n");
+    return 1;
+  }
+     
+
+
+  thread_handle =
+      CreateThread(NULL,                  // default security attributes
+                   0,                     // use default stack size
+                   StreamEventParams,     // thread function name
+                   &params,                // argument to thread function
+                   0,                     // use default creation flags
+                   &thread_id_array[event_threads_running]);  // returns the thread identifier
+  
+  event_threads_running++;
+
+  if (thread_handle == NULL) {
+    wprintf(L"CreateThread failed with %d\n", GetLastError());
+    return 1;
+  }
+  wprintf(L"Thread started %s\n", channel_path);
+  return 0;
+}
+
+
+DLLEXPORT int HelloWorld() { 
+  wprintf(L"HelloWorld\n");
   return 0;
 }

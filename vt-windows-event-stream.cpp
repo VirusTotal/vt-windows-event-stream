@@ -10,7 +10,7 @@
 
 
 void PrintUsage(const wchar_t* name) {
-  wprintf(L"Usage: %s <LogPath> <output_file_name>\n", name);
+  wprintf(L"Usage: %s <LogPath> <output_file_name> [thread]\n", name);
   wprintf(L"\nExamples:\n");
   wprintf(L"  %s Microsoft-Windows-Sysmon/Operational sysmon.xml\n", name);
   wprintf(
@@ -28,13 +28,21 @@ int __cdecl wmain(int argc, wchar_t* argv[]) {
   LPWSTR channel_path = NULL; // example L"Microsoft-Windows-Sysmon/Operational";
   LPWSTR output_file_name = NULL;
 
-  if (argc != 3) {
+  if (argc < 3) {
     PrintUsage(argv[0]);
     return 0;
   }
   channel_path = argv[1];
   output_file_name = argv[2];
 
-  return StreamEvents(channel_path, output_file_name);
+  if (argc == 3) {
+    wprintf(L"no thread\n");
+    return StreamEvents(channel_path, output_file_name);
+  } else {
+    wprintf(L"Run thread 60sec\n");
+    StartStreamEventsThread(channel_path, output_file_name);
+    Sleep(60 * 1000);
+  }
+  
 }
 
