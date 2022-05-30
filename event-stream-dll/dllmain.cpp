@@ -329,7 +329,7 @@ DLLEXPORT int HelloWorld0() {
   return 0;
 }
 
-DLLEXPORT int HelloWorld1(int test) {
+DLLEXPORT int HelloWorld1(LONG test) {
   wprintf(L"HelloWorld1\n");
   return 0;
 }

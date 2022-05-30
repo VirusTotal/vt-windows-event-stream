@@ -17,5 +17,5 @@ extern "C" DLLEXPORT int StartStreamEventsThread(LPWSTR channel_path,
 
 
 extern "C" DLLEXPORT int HelloWorld0();
-extern "C" DLLEXPORT int HelloWorld1(int test);
+extern "C" DLLEXPORT int HelloWorld1(LONG test);
 extern "C" DLLEXPORT int HelloWorld2(LPWSTR test);
