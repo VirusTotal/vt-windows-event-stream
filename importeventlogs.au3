@@ -8,7 +8,7 @@ Func StreamWinEventLogs($dll_path, $output_dir = "c:\temp\")
 	$stream_dll_hand = DllOpen($dll_path)
 	ConsoleWrite("dll handle  " & $stream_dll_hand  & @CRLF)
 	if $stream_dll_hand < 0 Then
-		ConsoleWrite("Error opening dll " & $stream_dll_hand " = " & $dll_path & @CRLF)
+		ConsoleWrite("Error opening dll " & $stream_dll_hand & " = " & $dll_path & @CRLF)
 		return $stream_dll_hand
 	EndIf
 	
