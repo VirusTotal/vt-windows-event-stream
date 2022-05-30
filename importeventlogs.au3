@@ -31,7 +31,7 @@ Func StreamWinEventLogs($output_dir = "c:\temp\")
 		return $ret
 	Endif
 	
-	    $ret = DllCall ( $stream_dll_hand, "int:cdecl", "StartStreamEventsThread", "WSTR", "Security", "WSTR",  $output_dir &  "Security.xml")
+	$ret = DllCall ( $stream_dll_hand, "int:cdecl", "StartStreamEventsThread", "WSTR", "Security", "WSTR",  $output_dir &  "Security.xml")
 	if $ret Then
 		ConsoleWrite("error Application " & $ret  & @CRLF)
 		return $ret
