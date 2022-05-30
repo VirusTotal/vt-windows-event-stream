@@ -3,7 +3,7 @@ Global $stream_dll_hand
 
 Func StreamWinEventLogs($output_dir = "c:\temp\")
 	 ; Start streaming logs
-	 ConsoleWrite("StreamLogs" & @CRLF)
+	 ConsoleWrite("StreamWinEventLogs" & @CRLF)
 	 
 	$stream_dll_hand = DllOpen("event-stream.dll")
 	ConsoleWrite("dll handle  " & $stream_dll_hand  & @CRLF)
@@ -42,6 +42,7 @@ Func StreamWinEventLogs($output_dir = "c:\temp\")
 		ConsoleWrite("error powershell " & $ret  & @CRLF)
 		return $ret
 	Endif
+	 ConsoleWrite("StreamWinEventLogs return " & $ret & @CRLF)
 
 	return 0
 EndFunc
