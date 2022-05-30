@@ -11,7 +11,7 @@
 #pragma comment(lib, "wevtapi.lib")
 
 #define MAX_THREADS 16
-int event_threads_running = 0;
+int event_threads_started = 0;
 
 DWORD thread_id_array[MAX_THREADS];
 
@@ -200,7 +200,7 @@ DLLEXPORT int StreamEvents(LPWSTR channel_path, LPWSTR output_file_name) {
   DWORD status = ERROR_SUCCESS;
   DWORD wait_ret = 0;
 
-  wprintf(L"StreamEvents\n");
+  wprintf(L"StreamEvents %ls  %ls\n", channel_path, output_file_name);
 
   if (!channel_path || !output_file_name) {
     PrintUsage(L"dll");
@@ -238,7 +238,7 @@ DLLEXPORT int StreamEvents(LPWSTR channel_path, LPWSTR output_file_name) {
                               NULL);                  // no attr. template)
 
   if (output_handle == INVALID_HANDLE_VALUE) {
-    wprintf(L"Unable to open output file: %s\n", output_file_name);
+    wprintf(L"Unable to open output file: %ls\n", output_file_name);
     EvtClose(subscription_handle);
     return 1;
   }
@@ -279,47 +279,48 @@ struct ThreadParams {
   WCHAR output_file_name[MAX_PARAM_LEN];
 };
 
+struct ThreadParams thread_data[MAX_THREADS + 1];
 
 DWORD WINAPI StreamEventParams(LPVOID lpParam) {
-  struct ThreadParams params;
+  struct ThreadParams *params = (struct ThreadParams* ) lpParam; // thread local copy
 
-  memcpy(&params, lpParam, sizeof(struct ThreadParams));
-  return StreamEvents(params.channel_path, params.output_file_name);
+  wprintf(L"StreamEventParams %s %s\n", params->channel_path, params->output_file_name);
+
+  return StreamEvents(params->channel_path, params->output_file_name);
 }
 
 
 DLLEXPORT int StartStreamEventsThread(LPWSTR channel_path, LPWSTR output_file_name) {
   HANDLE thread_handle;
-  struct ThreadParams params;
+//  struct ThreadParams params;
   DWORD thread_id = 0;
   
   wprintf(L"StartStreamEventsThread start\n");
-  
-  wcscpy_s(params.channel_path, MAX_PARAM_LEN - 1, channel_path);
-  wcscpy_s(params.output_file_name, MAX_PARAM_LEN - 1, output_file_name);
 
-  if (event_threads_running > MAX_THREADS) {
+  if (event_threads_started > MAX_THREADS) {
     wprintf(L"Too many threads\n");
     return 1;
   }
-     
 
+  memset(&thread_data[event_threads_started], 0, sizeof(struct ThreadParams)); // init 
+  wcscpy_s(thread_data[event_threads_started].channel_path, MAX_PARAM_LEN - 1, channel_path);
+  wcscpy_s(thread_data[event_threads_started].output_file_name, MAX_PARAM_LEN - 1, output_file_name);
 
   thread_handle =
       CreateThread(NULL,                  // default security attributes
                    0,                     // use default stack size
                    StreamEventParams,     // thread function name
-                   &params,                // argument to thread function
+                   &thread_data[event_threads_started], // argument to thread function
                    0,                     // use default creation flags
-                   &thread_id_array[event_threads_running]);  // returns the thread identifier
+                   &thread_id_array[event_threads_started]);  // returns the thread identifier
   
-  event_threads_running++;
+  event_threads_started++;
 
   if (thread_handle == NULL) {
     wprintf(L"CreateThread failed with %d\n", GetLastError());
     return 1;
   }
-  wprintf(L"Thread started %s\n", channel_path);
+  wprintf(L"Thread started %s %s\n", channel_path, output_file_name);
   return 0;
 }
 
