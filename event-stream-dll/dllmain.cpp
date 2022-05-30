@@ -46,20 +46,6 @@ DWORD EnumerateResults(EVT_HANDLE hResults, HANDLE outFile);
 
 bool keep_running = TRUE;
 
-void PrintUsage(const wchar_t* name) {
-  wprintf(L"Usage: %s <LogPath> <output_file_name>\n", name);
-  wprintf(L"\nExamples:\n");
-  wprintf(L"  %s Microsoft-Windows-Sysmon/Operational sysmon.xml\n", name);
-  wprintf(
-      L"  %s Microsoft-Windows-Sysmon/Operational "
-      L"\\\\VBOXSVR\\tmp\\sysmon.xml\n",
-      name);
-  wprintf(L"  %s Security \\\\VBOXSVR\\tmp\\security.xml\n", name);
-  wprintf(
-      L"  %s Microsoft-Windows-Powershell/Operational "
-      L"\\\\VBOXSVR\\tmp\\ps.xml\n",
-      name);
-}
 BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
   keep_running = FALSE;
 
@@ -200,10 +186,8 @@ DLLEXPORT int StreamEvents(LPWSTR channel_path, LPWSTR output_file_name) {
   DWORD status = ERROR_SUCCESS;
   DWORD wait_ret = 0;
 
-  wprintf(L"StreamEvents %ls  %ls\n", channel_path, output_file_name);
-
   if (!channel_path || !output_file_name) {
-    PrintUsage(L"dll");
+    wprintf(L"Invalid input %ls  %ls\n", channel_path, output_file_name);
     return 1;
   }
 
