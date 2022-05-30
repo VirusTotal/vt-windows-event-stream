@@ -42,7 +42,7 @@ Func StreamWinEventLogs($output_dir = "c:\temp\")
 		ConsoleWrite("error powershell " & $ret  & @CRLF)
 		return $ret
 	Endif
-	 ConsoleWrite("StreamWinEventLogs return " & $ret & @CRLF)
+	ConsoleWrite("StreamWinEventLogs return " & $ret & @CRLF)
 
 	return 0
 EndFunc
