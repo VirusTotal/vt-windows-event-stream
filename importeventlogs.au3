@@ -1,11 +1,11 @@
 
 Global $stream_dll_hand
 
-Func StreamWinEventLogs($output_dir = "c:\temp\")
+Func StreamWinEventLogs($dll_path, $output_dir = "c:\temp\")
 	 ; Start streaming logs
 	 ConsoleWrite("StreamWinEventLogs" & @CRLF)
 	 
-	$stream_dll_hand = DllOpen("event-stream.dll")
+	$stream_dll_hand = DllOpen($dll_path)
 	ConsoleWrite("dll handle  " & $stream_dll_hand  & @CRLF)
 	if $stream_dll_hand < 0 Then
 		ConsoleWrite("Error opening dll " & $stream_dll_hand  & @CRLF)

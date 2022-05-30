@@ -20,7 +20,7 @@ ConsoleWrite("@CPUArch: " & @CPUArch & @CRLF)
 
 _DebugSetup("DllCall", True) 
 
-Local $ret = StreamWinEventLogs("c:\temp\")
+Local $ret = StreamWinEventLogs("event-stream.dll", "c:\temp\")
 if $ret Then
 	ConsoleWrite("Error starting" & @CRLF)
 	Exit (1)
