@@ -1,7 +1,7 @@
 #cs ----------------------------------------------------------------------------
 
  AutoIt Version: 3.3.16.0
- Author:         karlh@
+ Author:         karlh@google.com
 
  Script Function:
 	Start event streams
@@ -14,7 +14,6 @@
 
 #include "importeventlogs.au3"
 
-;MsgBox(0, "", "@AutoItVersion: " & AutoItVersion & ", @CPUArch: " & @CPUArch)
 _DebugSetup("Start", True) 
 ConsoleWrite("starting" & @CRLF)
 ConsoleWrite("@CPUArch: " & @CPUArch & @CRLF)
@@ -27,7 +26,7 @@ if $ret Then
 	Exit (1)
 EndIf
 
+; run test for 10 seconds and exit
 sleep(10 * 1000)
 
-; MsgBox($MB_OK, "Tutorial", "done") 
 ConsoleWrite("exit" & @CRLF)
