@@ -43,12 +43,6 @@ Func StreamWinEventLogs($output_dir = "c:\temp\")
 		return $ret
 	Endif
 
-	ConsoleWrite("dll ret " & $ret  & @CRLF)
-	$ret = DllCall ( $stream_dll_hand, "int:cdecl", "HelloWorld0")
-	ConsoleWrite("dll ret " & $ret  & @CRLF)
-	$ret = DllCall ( $stream_dll_hand, 'int:cdecl', "HelloWorld1", "int", 0)
-
-	ConsoleWrite("dll ret " & $ret  & @CRLF)
 	return 0
 EndFunc
 
