@@ -212,6 +212,8 @@ DLLEXPORT int StreamEvents(LPWSTR channel_path, LPWSTR output_file_name) {
       wprintf(L"EvtSubscribe failed with %lu.\n", status);
 
     CloseHandle(signal_event);
+
+    wprintf(L"Stream events exit\n");
     return 1;
   }
 
@@ -307,3 +309,10 @@ DLLEXPORT int StartStreamEventsThread(LPWSTR channel_path, LPWSTR output_file_na
   return 0;
 }
 
+DLLEXPORT int StopEventStreamThreads() {
+    keep_running = false;
+
+    // wait a sec for thread to finish
+    Sleep(1000);
+    return 0;
+}

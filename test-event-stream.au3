@@ -28,5 +28,6 @@ EndIf
 
 ; run test for 10 seconds and exit
 sleep(10 * 1000)
+StopStreamWinEventLogs()
 
 ConsoleWrite("exit" & @CRLF)

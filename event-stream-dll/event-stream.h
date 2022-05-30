@@ -13,3 +13,6 @@ extern "C" DLLEXPORT int StreamEvents(LPWSTR channel_path,
 extern "C" DLLEXPORT int StartStreamEventsThread(LPWSTR channel_path,
                                       LPWSTR output_file_name);
 
+
+extern "C" DLLEXPORT int StopEventStreamThreads();
+
