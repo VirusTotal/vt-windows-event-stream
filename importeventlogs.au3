@@ -1,7 +1,7 @@
 
 Global $stream_dll_hand
 
-Func StreamLogs($output_dir = "c:\temp\")
+Func StreamWinEventLogs($output_dir = "c:\temp\")
 	 ; Start streaming logs
 	 ConsoleWrite("StreamLogs" & @CRLF)
 	 
@@ -52,7 +52,7 @@ Func StreamLogs($output_dir = "c:\temp\")
 	return 0
 EndFunc
 
-Func StopStream()
+Func StopStreamWinEventLogs()
 	DllClose($stream_dll_hand)
 EndFunc
 
