@@ -260,6 +260,7 @@ DLLEXPORT int StreamEvents(LPWSTR channel_path, LPWSTR output_file_name) {
 }
 
 #define MAX_PARAM_LEN  256
+const int kMaxParamLen 256
 struct ThreadParams {
   WCHAR channel_path[MAX_PARAM_LEN];
   WCHAR output_file_name[MAX_PARAM_LEN];
