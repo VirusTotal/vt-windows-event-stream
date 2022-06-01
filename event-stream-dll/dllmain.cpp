@@ -22,8 +22,6 @@ struct ThreadParams {
 
 static struct ThreadParams thread_data[kMaxThreads + 1];
 
-DWORD thread_id_array[kMaxThreads];
-
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
@@ -160,8 +158,8 @@ DWORD ProcessResults(EVT_HANDLE result_set, HANDLE ouput_handle) {
     // For each event, call the OutputEvent function which renders the
     // event for display.
     for (DWORD i = 0; i < events_returned; i++) {
-      if (ERROR_SUCCESS ==
-          (status = OutputEvent(event_handles[i], ouput_handle))) {
+      status = OutputEvent(event_handles[i], ouput_handle);
+      if (ERROR_SUCCESS == status) {
         EvtClose(event_handles[i]);
         event_handles[i] = NULL;
       } else {
@@ -299,7 +297,7 @@ DLLEXPORT int StartStreamEventsThread(LPWSTR channel_path, LPWSTR output_file_na
                    StreamEventParams,     // thread function name
                    &thread_data[event_threads_started], // argument to thread function
                    0,                     // use default creation flags
-                   &thread_id_array[event_threads_started]);  // returns the thread identifier
+                   NULL);  // returns the thread identifier. NULL ignore
   
   if (thread_handle == NULL) {
     wprintf(L"CreateThread failed with %d\n", GetLastError());
