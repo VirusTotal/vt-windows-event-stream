@@ -10,10 +10,19 @@
 
 #pragma comment(lib, "wevtapi.lib")
 
-#define MAX_THREADS 16
-int event_threads_started = 0;
+static const int kMaxThreads = 16;
+static int event_threads_started = 0;
+static const int kMaxParamLen = 256;
+static bool keep_running = true;
 
-DWORD thread_id_array[MAX_THREADS];
+struct ThreadParams {
+    WCHAR channel_path[kMaxParamLen];
+    WCHAR output_file_name[kMaxParamLen];
+};
+
+static struct ThreadParams thread_data[kMaxThreads + 1];
+
+DWORD thread_id_array[kMaxThreads];
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -44,7 +53,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
 DWORD EnumerateResults(EVT_HANDLE hResults, HANDLE outFile);
 
-bool keep_running = TRUE;
 
 BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
   keep_running = FALSE;
@@ -226,6 +234,7 @@ DLLEXPORT int StreamEvents(LPWSTR channel_path, LPWSTR output_file_name) {
   if (output_handle == INVALID_HANDLE_VALUE) {
     wprintf(L"Unable to open output file: %ls\n", output_file_name);
     EvtClose(subscription_handle);
+    CloseHandle(signal_event);
     return 1;
   }
   wprintf(L"Press control-C to quit.\n");
@@ -234,8 +243,9 @@ DLLEXPORT int StreamEvents(LPWSTR channel_path, LPWSTR output_file_name) {
   while (keep_running) {
     wait_ret = WaitForSingleObject(signal_event, 1000);
     if (wait_ret == WAIT_OBJECT_0) {
-      if (ERROR_NO_MORE_ITEMS !=
-          (status = ProcessResults(subscription_handle, output_handle))) {
+      CloseHandle(signal_event);
+      status = ProcessResults(subscription_handle, output_handle);
+      if (status != ERROR_NO_MORE_ITEMS) {
         break;
       }
 
@@ -259,14 +269,6 @@ DLLEXPORT int StreamEvents(LPWSTR channel_path, LPWSTR output_file_name) {
   return 0;
 }
 
-#define MAX_PARAM_LEN  256
-const int kMaxParamLen 256
-struct ThreadParams {
-  WCHAR channel_path[MAX_PARAM_LEN];
-  WCHAR output_file_name[MAX_PARAM_LEN];
-};
-
-struct ThreadParams thread_data[MAX_THREADS + 1];
 
 DWORD WINAPI StreamEventParams(LPVOID lpParam) {
   struct ThreadParams *params = (struct ThreadParams* ) lpParam; // thread local copy
@@ -278,19 +280,18 @@ DWORD WINAPI StreamEventParams(LPVOID lpParam) {
 
 
 DLLEXPORT int StartStreamEventsThread(LPWSTR channel_path, LPWSTR output_file_name) {
-  HANDLE thread_handle;
-  DWORD thread_id = 0;
+  HANDLE thread_handle = NULL;
   
   wprintf(L"StartStreamEventsThread start\n");
 
-  if (event_threads_started > MAX_THREADS) {
+  if (event_threads_started > kMaxThreads) {
     wprintf(L"Too many threads\n");
     return 1;
   }
 
   memset(&thread_data[event_threads_started], 0, sizeof(struct ThreadParams)); // init 
-  wcscpy_s(thread_data[event_threads_started].channel_path, MAX_PARAM_LEN - 1, channel_path);
-  wcscpy_s(thread_data[event_threads_started].output_file_name, MAX_PARAM_LEN - 1, output_file_name);
+  wcscpy_s(thread_data[event_threads_started].channel_path, kMaxParamLen - 1, channel_path);
+  wcscpy_s(thread_data[event_threads_started].output_file_name, kMaxParamLen - 1, output_file_name);
 
   thread_handle =
       CreateThread(NULL,                  // default security attributes
