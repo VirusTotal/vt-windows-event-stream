@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vt-windows-event-stream", "vt-windows-event-stream.vcxproj", "{84D5355C-005E-480A-8352-B4A527C7EC4D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "event-stream-dll", "event-stream-dll\event-stream-dll.vcxproj", "{E3C26157-DE8D-4777-9CA9-A5FD609994D2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{84D5355C-005E-480A-8352-B4A527C7EC4D}.Release|x64.Build.0 = Release|x64
 		{84D5355C-005E-480A-8352-B4A527C7EC4D}.Release|x86.ActiveCfg = Release|Win32
 		{84D5355C-005E-480A-8352-B4A527C7EC4D}.Release|x86.Build.0 = Release|Win32
+		{E3C26157-DE8D-4777-9CA9-A5FD609994D2}.Debug|x64.ActiveCfg = Debug|x64
+		{E3C26157-DE8D-4777-9CA9-A5FD609994D2}.Debug|x64.Build.0 = Debug|x64
+		{E3C26157-DE8D-4777-9CA9-A5FD609994D2}.Debug|x86.ActiveCfg = Debug|Win32
+		{E3C26157-DE8D-4777-9CA9-A5FD609994D2}.Debug|x86.Build.0 = Debug|Win32
+		{E3C26157-DE8D-4777-9CA9-A5FD609994D2}.Release|x64.ActiveCfg = Release|x64
+		{E3C26157-DE8D-4777-9CA9-A5FD609994D2}.Release|x64.Build.0 = Release|x64
+		{E3C26157-DE8D-4777-9CA9-A5FD609994D2}.Release|x86.ActiveCfg = Release|Win32
+		{E3C26157-DE8D-4777-9CA9-A5FD609994D2}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

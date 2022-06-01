@@ -1,0 +1,4 @@
+﻿  pch.cpp
+  dllmain.cpp
+     Creating library C:\Users\karlh\Work\vt-windows-event-stream\Debug\event-stream.lib and object C:\Users\karlh\Work\vt-windows-event-stream\Debug\event-stream.exp
+  event-stream-dll.vcxproj -> C:\Users\karlh\Work\vt-windows-event-stream\Debug\event-stream.dll

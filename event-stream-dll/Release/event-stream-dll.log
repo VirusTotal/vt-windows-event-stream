@@ -1,0 +1,8 @@
+﻿  pch.cpp
+  dllmain.cpp
+     Creating library C:\Users\karlh\Work\vt-windows-event-stream\Release\event-stream.lib and object C:\Users\karlh\Work\vt-windows-event-stream\Release\event-stream.exp
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 121 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  event-stream-dll.vcxproj -> C:\Users\karlh\Work\vt-windows-event-stream\Release\event-stream.dll
