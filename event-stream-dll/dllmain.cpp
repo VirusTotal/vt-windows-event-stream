@@ -12,15 +12,17 @@
 
 static const int kMaxThreads = 16;
 static int event_threads_started = 0;
-static const int kMaxParamLen = 256;
-static bool keep_running = true;
-
-struct ThreadParams {
+const int kMaxParamLen = 256;
+struct EventSreamContext {
     WCHAR channel_path[kMaxParamLen];
     WCHAR output_file_name[kMaxParamLen];
+    HANDLE thread_handle;
 };
+static bool keep_running = true;
 
-static struct ThreadParams thread_data[kMaxThreads + 1];
+
+
+static struct EventSreamContext thread_data[kMaxThreads];
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -31,6 +33,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
   {
     case DLL_PROCESS_ATTACH:
       printf("DllMain DLL_PROCESS_ATTACH:\n");
+      // init 
+      memset(thread_data, 0, kMaxThreads  * sizeof(struct EventSreamContext)); 
+
       break;
     case DLL_THREAD_ATTACH:
       printf("DllMain DLL_THREAD_ATTACH:\n");
@@ -108,8 +113,9 @@ DWORD OutputEvent(EVT_HANDLE hEvent, HANDLE output_handle) {
                 xml_unicode.data(), &unicode_buff_used, &property_count);
     }
 
-    if (ERROR_SUCCESS != (status = GetLastError())) {
-      wprintf(L"EvtRender failed with %d\n", GetLastError());
+    status = GetLastError();
+    if (status != ERROR_SUCCESS) {
+      wprintf(L"EvtRender failed with %d\n", status);
       return status;
     }
   }
@@ -149,7 +155,8 @@ DWORD ProcessResults(EVT_HANDLE result_set, HANDLE ouput_handle) {
     // Get a block of events from the result set.
     if (!EvtNext(result_set, kEventsArraySize, event_handles, INFINITE, 0,
                  &events_returned)) {
-      if (ERROR_NO_MORE_ITEMS != (status = GetLastError())) {
+      status = GetLastError();
+      if (status != ERROR_NO_MORE_ITEMS) {
         wprintf(L"EvtNext failed with %lu\n", status);
       }
       break;  // goto cleanup
@@ -240,8 +247,8 @@ DLLEXPORT int StreamEvents(LPWSTR channel_path, LPWSTR output_file_name) {
   // Loop until the user does a control-C
   while (keep_running) {
     wait_ret = WaitForSingleObject(signal_event, 1000);
+    
     if (wait_ret == WAIT_OBJECT_0) {
-      CloseHandle(signal_event);
       status = ProcessResults(subscription_handle, output_handle);
       if (status != ERROR_NO_MORE_ITEMS) {
         break;
@@ -249,6 +256,7 @@ DLLEXPORT int StreamEvents(LPWSTR channel_path, LPWSTR output_file_name) {
 
       ResetEvent(signal_event);
     } else if (wait_ret == WAIT_TIMEOUT) {
+      // intended to timeout every second so we can exit on keep running change
       continue;
     } else if (wait_ret == WAIT_ABANDONED) {
       wprintf(L"WaitForSingleObject WAIT_ABANDONED\n");
@@ -269,7 +277,7 @@ DLLEXPORT int StreamEvents(LPWSTR channel_path, LPWSTR output_file_name) {
 
 
 DWORD WINAPI StreamEventParams(LPVOID lpParam) {
-  struct ThreadParams *params = (struct ThreadParams* ) lpParam; // thread local copy
+  struct EventSreamContext *params = (struct EventSreamContext* ) lpParam; // thread local copy
 
   wprintf(L"StreamEventParams %s %s\n", params->channel_path, params->output_file_name);
 
@@ -278,7 +286,7 @@ DWORD WINAPI StreamEventParams(LPVOID lpParam) {
 
 
 DLLEXPORT int StartStreamEventsThread(LPWSTR channel_path, LPWSTR output_file_name) {
-  HANDLE thread_handle = NULL;
+
   
   wprintf(L"StartStreamEventsThread start\n");
 
@@ -287,11 +295,11 @@ DLLEXPORT int StartStreamEventsThread(LPWSTR channel_path, LPWSTR output_file_na
     return 1;
   }
 
-  memset(&thread_data[event_threads_started], 0, sizeof(struct ThreadParams)); // init 
+  memset(&thread_data[event_threads_started], 0, sizeof(struct EventSreamContext)); // init 
   wcscpy_s(thread_data[event_threads_started].channel_path, kMaxParamLen - 1, channel_path);
   wcscpy_s(thread_data[event_threads_started].output_file_name, kMaxParamLen - 1, output_file_name);
 
-  thread_handle =
+  thread_data[event_threads_started].thread_handle =
       CreateThread(NULL,                  // default security attributes
                    0,                     // use default stack size
                    StreamEventParams,     // thread function name
@@ -299,7 +307,7 @@ DLLEXPORT int StartStreamEventsThread(LPWSTR channel_path, LPWSTR output_file_na
                    0,                     // use default creation flags
                    NULL);  // returns the thread identifier. NULL ignore
   
-  if (thread_handle == NULL) {
+  if (thread_data[event_threads_started].thread_handle == NULL) {
     wprintf(L"CreateThread failed with %d\n", GetLastError());
     return 1;
   }
@@ -312,7 +320,9 @@ DLLEXPORT int StartStreamEventsThread(LPWSTR channel_path, LPWSTR output_file_na
 DLLEXPORT int StopEventStreamThreads() {
     keep_running = false;
 
-    // wait a sec for thread to finish
-    Sleep(1000);
+    for (int i = 0; i < event_threads_started; i++) {
+        WaitForSingleObject(thread_data[i].thread_handle, 3000);
+    }
+
     return 0;
 }

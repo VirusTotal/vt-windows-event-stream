@@ -41,7 +41,8 @@ int __cdecl wmain(int argc, wchar_t* argv[]) {
   } else {
     wprintf(L"Run thread 60sec\n");
     StartStreamEventsThread(channel_path, output_file_name);
-    Sleep(60 * 1000);
+    Sleep(15 * 1000);
+    StopEventStreamThreads();
   }
   
 }
