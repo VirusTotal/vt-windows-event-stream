@@ -1,4 +1,6 @@
 ﻿  dllmain.cpp
-C:\Users\karlh\Work\vt-windows-event-stream\event-stream-dll\dllmain.cpp(29,31): warning C4100: 'lpReserved': unreferenced formal parameter
-C:\Users\karlh\Work\vt-windows-event-stream\event-stream-dll\dllmain.cpp(27,32): warning C4100: 'hModule': unreferenced formal parameter
+C:\Users\karlh\Work\vt-windows-event-stream\event-stream-dll\dllmain.cpp(27,31): warning C4100: 'lpReserved': unreferenced formal parameter
+C:\Users\karlh\Work\vt-windows-event-stream\event-stream-dll\dllmain.cpp(25,32): warning C4100: 'hModule': unreferenced formal parameter
+  LINK : program database C:\Users\karlh\Work\vt-windows-event-stream\x64\Debug\event-stream.pdb missing; performing full link
+     Creating library C:\Users\karlh\Work\vt-windows-event-stream\x64\Debug\event-stream.lib and object C:\Users\karlh\Work\vt-windows-event-stream\x64\Debug\event-stream.exp
   event-stream-dll.vcxproj -> C:\Users\karlh\Work\vt-windows-event-stream\x64\Debug\event-stream.dll
