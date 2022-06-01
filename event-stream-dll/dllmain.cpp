@@ -301,12 +301,12 @@ DLLEXPORT int StartStreamEventsThread(LPWSTR channel_path, LPWSTR output_file_na
                    0,                     // use default creation flags
                    &thread_id_array[event_threads_started]);  // returns the thread identifier
   
-  event_threads_started++;
-
   if (thread_handle == NULL) {
     wprintf(L"CreateThread failed with %d\n", GetLastError());
     return 1;
   }
+  event_threads_started++;
+
   wprintf(L"Thread started %s %s\n", channel_path, output_file_name);
   return 0;
 }
