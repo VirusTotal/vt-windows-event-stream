@@ -1,7 +1,11 @@
 # vt-windows-event-stream
-Tool to stream windows events to a file. 
+Tool to stream windows events to a file.
+This is a demo tool inspired by:
+  * https://docs.microsoft.com/en-us/windows/win32/wes/subscribing-to-events
+  * https://docs.microsoft.com/en-us/sysinternals/downloads/sysmon
 
-Example usage:
+## Command line usage
+Example usage with command line:
 
 ```
   vt-windows-event-stream.exe <event log name> <output file>
@@ -11,3 +15,9 @@ Example usage:
   vt-windows-event-stream.exe Microsoft-Windows-Powershell/Operational \\server\tmp\ps.xml
 
 ```
+
+
+## DLL usage
+*  Call DLL directly see [headers](event-stream-dll/event-stream.h)
+ * See [importeventlogs.au3](importeventlogs.au3) example
+
