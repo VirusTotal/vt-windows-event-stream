@@ -4,7 +4,7 @@
  Author:         karlh@google.com
 
  Script Function:
-	Start event streams
+	Proof of concept demo to start event streams
 
 #ce ----------------------------------------------------------------------------
 
@@ -14,11 +14,11 @@
 
 #include "importeventlogs.au3"
 
-_DebugSetup("Start", True) 
+_DebugSetup("Start", True)
 ConsoleWrite("starting" & @CRLF)
 ConsoleWrite("@CPUArch: " & @CPUArch & @CRLF)
 
-_DebugSetup("DllCall", True) 
+_DebugSetup("DllCall", True)
 
 Local $ret = StreamWinEventLogs("event-stream.dll", "c:\temp\")
 if $ret Then
