@@ -1,2 +1,0 @@
-﻿  vt-windows-event-stream.cpp
-C:\Users\karlh\Work\vt-windows-event-stream\vt-windows-event-stream.cpp(9,10): fatal error C1083: Cannot open include file: 'event-stream.h': No such file or directory

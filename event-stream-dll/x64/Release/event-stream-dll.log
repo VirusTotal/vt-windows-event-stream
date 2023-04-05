@@ -1,4 +1,0 @@
-﻿  pch.cpp
-  dllmain.cpp
-C:\Users\karlh\Work\vt-windows-event-stream\event-stream-dll\dllmain.cpp(196,35): error C2440: 'initializing': cannot convert from 'const wchar_t [2]' to 'LPWSTR'
-C:\Users\karlh\Work\vt-windows-event-stream\event-stream-dll\dllmain.cpp(196,29): message : Conversion from string literal loses const qualifier (see /Zc:strictStrings)
