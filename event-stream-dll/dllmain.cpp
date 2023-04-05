@@ -208,7 +208,7 @@ cleanup:
 DLLEXPORT int StreamEvents(LPWSTR channel_path, LPWSTR output_file_name) {
   EVT_HANDLE subscription_handle = NULL;
   HANDLE output_handle = NULL;
-  LPWSTR subscription_query = L"*";
+  LPCWSTR subscription_query = L"*";
   HANDLE signal_event = NULL;
   DWORD status = ERROR_SUCCESS;
   DWORD wait_ret = 0;
