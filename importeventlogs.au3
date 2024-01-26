@@ -52,7 +52,7 @@ Func StreamWinEventLogs($dll_path, $output_dir = "c:\temp\")
 		return $ret
 	Endif
 
-	$ret = DllCall ( $stream_dll_hand, "int:cdecl", "StartStreamEventsThread", "WSTR", "Windows Powershell", "WSTR",  $output_dir &  "Microsoft-Windows-PowershellOperational.xml")
+	$ret = DllCall ( $stream_dll_hand, "int:cdecl", "StartStreamEventsThread", "WSTR", "Microsoft-Windows-Powershell/Operational", "WSTR",  $output_dir &  "Microsoft-Windows-PowershellOperational.xml")
 	if $ret Then
 		ConsoleWrite("error powershell " & $ret  & @CRLF)
 		return $ret
